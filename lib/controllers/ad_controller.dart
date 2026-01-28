@@ -4,15 +4,13 @@ import 'package:get/get.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class AdController extends GetxController {
-  // === Banner Ad ===
   BannerAd? bannerAd;
   var isBannerAdLoaded = false.obs;
 
-  // === Interstitial Ad ===
   InterstitialAd? interstitialAd;
   var isInterstitialAdLoaded = false.obs;
 
-  // === Test Ad Unit IDs ===
+  // Test Ad Unit IDs
   String get bannerAdUnitId {
     if (Platform.isAndroid) {
       return 'ca-app-pub-3940256099942544/6300978111';

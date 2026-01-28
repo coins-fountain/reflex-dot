@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 
 class GameController extends GetxController with GetTickerProviderStateMixin {
-  // === Observable Variables ===
+  //  Observable Variables
   var isPlaying = false.obs;
   var isGameOver = false.obs;
   var score = 0.obs;
@@ -15,14 +15,14 @@ class GameController extends GetxController with GetTickerProviderStateMixin {
   var dotPositionY = 0.0.obs;
   var dotSize = 0.0.obs;
 
-  // === Constants ===
+  //  Constants
   static const double initialDotSize = 80.0;
   static const double minDotSize = 0.0;
   static const int baseShrinkDurationMs = 2000;
   static const int minShrinkDurationMs = 600;
   static const int difficultyFactor = 40;
 
-  // === Internal ===
+  //  Internal
   final _storage = GetStorage();
   late AnimationController _shrinkController;
   late Animation<double> _shrinkAnimation;
