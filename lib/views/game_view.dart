@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
+import '../controllers/ad_controller.dart';
 import '../controllers/game_controller.dart';
 import 'widgets/game_dot.dart';
 
@@ -119,102 +121,150 @@ class GameView extends StatelessWidget {
   }
 
   Widget _buildIdleScreen(GameController controller) {
+    final adController = Get.find<AdController>();
+
     return SafeArea(
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Title
-            ShaderMask(
-              shaderCallback: (bounds) => const LinearGradient(
-                colors: [Colors.orange, Colors.deepOrange, Colors.red],
-              ).createShader(bounds),
-              child: const Text(
-                'REFLEX DOT',
-                style: TextStyle(
-                  fontSize: 48,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
-                  letterSpacing: 4,
-                ),
+      child: Column(
+        children: [
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Title
+                  ShaderMask(
+                    shaderCallback: (bounds) => const LinearGradient(
+                      colors: [Colors.orange, Colors.deepOrange, Colors.red],
+                    ).createShader(bounds),
+                    child: const Text(
+                      'REFLEX DOT',
+                      style: TextStyle(
+                        fontSize: 48,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                        letterSpacing: 4,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Catch the dot before it vanishes!',
+                    style: TextStyle(fontSize: 16, color: Colors.white54),
+                  ),
+                  const SizedBox(height: 60),
+
+                  // High Score
+                  _buildScoreCard('HIGH SCORE', controller.highScore.value),
+                  const SizedBox(height: 40),
+
+                  // Start Button
+                  _buildActionButton('START GAME', onTap: controller.startGame),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
-            const Text(
-              'Catch the dot before it vanishes!',
-              style: TextStyle(fontSize: 16, color: Colors.white54),
-            ),
-            const SizedBox(height: 60),
+          ),
 
-            // High Score
-            _buildScoreCard('HIGH SCORE', controller.highScore.value),
-            const SizedBox(height: 40),
-
-            // Start Button
-            _buildActionButton('START GAME', onTap: controller.startGame),
-          ],
-        ),
+          // Banner Ad at bottom
+          Obx(() {
+            if (adController.isBannerAdLoaded.value &&
+                adController.bannerAd != null) {
+              return Container(
+                alignment: Alignment.center,
+                width: adController.bannerAd!.size.width.toDouble(),
+                height: adController.bannerAd!.size.height.toDouble(),
+                child: AdWidget(ad: adController.bannerAd!),
+              );
+            }
+            return const SizedBox.shrink();
+          }),
+        ],
       ),
     );
   }
 
   Widget _buildGameOverScreen(GameController controller) {
+    final adController = Get.find<AdController>();
     final isNewHighScore =
         controller.score.value >= controller.highScore.value &&
         controller.score.value > 0;
 
+    // Show interstitial ad when game over screen is displayed
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      adController.showInterstitialAd();
+    });
+
     return SafeArea(
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Game Over Title
-            const Text(
-              'GAME OVER',
-              style: TextStyle(
-                fontSize: 42,
-                fontWeight: FontWeight.w900,
-                color: Colors.redAccent,
-                letterSpacing: 4,
+      child: Column(
+        children: [
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Game Over Title
+                  const Text(
+                    'GAME OVER',
+                    style: TextStyle(
+                      fontSize: 42,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.redAccent,
+                      letterSpacing: 4,
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+
+                  // Score
+                  _buildScoreCard('YOUR SCORE', controller.score.value),
+                  const SizedBox(height: 16),
+
+                  // High Score
+                  if (isNewHighScore)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Colors.amber, Colors.orange],
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        '🎉 NEW HIGH SCORE! 🎉',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    )
+                  else
+                    _buildScoreCard('HIGH SCORE', controller.highScore.value),
+
+                  const SizedBox(height: 50),
+
+                  // Play Again Button
+                  _buildActionButton('PLAY AGAIN', onTap: controller.playAgain),
+                ],
               ),
             ),
-            const SizedBox(height: 40),
+          ),
 
-            // Score
-            _buildScoreCard('YOUR SCORE', controller.score.value),
-            const SizedBox(height: 16),
-
-            // High Score
-            if (isNewHighScore)
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Colors.amber, Colors.orange],
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  '🎉 NEW HIGH SCORE! 🎉',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-              )
-            else
-              _buildScoreCard('HIGH SCORE', controller.highScore.value),
-
-            const SizedBox(height: 50),
-
-            // Play Again Button
-            _buildActionButton('PLAY AGAIN', onTap: controller.playAgain),
-          ],
-        ),
+          // Banner Ad at bottom
+          Obx(() {
+            if (adController.isBannerAdLoaded.value &&
+                adController.bannerAd != null) {
+              return Container(
+                alignment: Alignment.center,
+                width: adController.bannerAd!.size.width.toDouble(),
+                height: adController.bannerAd!.size.height.toDouble(),
+                child: AdWidget(ad: adController.bannerAd!),
+              );
+            }
+            return const SizedBox.shrink();
+          }),
+        ],
       ),
     );
   }
