@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class GameController extends GetxController with GetTickerProviderStateMixin {
   //  Observable Variables
@@ -13,6 +14,7 @@ class GameController extends GetxController with GetTickerProviderStateMixin {
   var resumeCountdown = 3.obs;
   var score = 0.obs;
   var highScore = 0.obs;
+  var appVersion = ''.obs;
 
   // Ad Logic
   var gameOverCount = 0;
@@ -44,6 +46,7 @@ class GameController extends GetxController with GetTickerProviderStateMixin {
     super.onInit();
     _loadHighScore();
     _initShrinkAnimation();
+    _loadAppVersion();
   }
 
   @override
@@ -59,6 +62,11 @@ class GameController extends GetxController with GetTickerProviderStateMixin {
 
   void _loadHighScore() {
     highScore.value = _storage.read<int>('highScore') ?? 0;
+  }
+
+  Future<void> _loadAppVersion() async {
+    final packageInfo = await PackageInfo.fromPlatform();
+    appVersion.value = 'v${packageInfo.version}';
   }
 
   void _saveHighScore() {

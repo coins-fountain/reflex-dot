@@ -159,6 +159,35 @@ class GameView extends StatelessWidget {
                 }
                 return const SizedBox.shrink();
               }),
+
+              // Persistent App Version
+              Positioned(
+                bottom: 8,
+                left: 0,
+                right: 0,
+                child: Obx(() {
+                  final isLandscape =
+                      MediaQuery.of(context).orientation ==
+                      Orientation.landscape;
+                  return Padding(
+                    padding: EdgeInsets.only(
+                      bottom: isLandscape ? 0 : 0, // Adjust if needed
+                      right: isLandscape
+                          ? 30
+                          : 0, // Move away from edge in landscape
+                    ),
+                    child: Text(
+                      controller.appVersion.value,
+                      textAlign: isLandscape ? TextAlign.end : TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: Colors.white24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  );
+                }),
+              ),
             ],
           );
         },
@@ -170,60 +199,115 @@ class GameView extends StatelessWidget {
     final adController = Get.find<AdController>();
 
     return SafeArea(
-      child: Column(
-        children: [
-          Expanded(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Title
-                  ShaderMask(
-                    shaderCallback: (bounds) => const LinearGradient(
-                      colors: [Colors.orange, Colors.deepOrange, Colors.red],
-                    ).createShader(bounds),
-                    child: const Text(
-                      'REFLEX DOT',
-                      style: TextStyle(
-                        fontSize: 48,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                        letterSpacing: 4,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Catch the dot before it vanishes!',
-                    style: TextStyle(fontSize: 16, color: Colors.white54),
-                  ),
-                  const SizedBox(height: 60),
+      child: OrientationBuilder(
+        builder: (context, orientation) {
+          final isLandscape = orientation == Orientation.landscape;
 
-                  // High Score
-                  _buildScoreCard('HIGH SCORE', controller.highScore.value),
-                  const SizedBox(height: 40),
+          return Column(
+            children: [
+              Expanded(
+                child: Center(
+                  child: isLandscape
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            // Left Side: Title & Tagline
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                _buildTitle(),
+                                const SizedBox(height: 16),
+                                const Text(
+                                  'Catch the dot before it vanishes!',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.white54,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            // Right Side: Score & Start
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                _buildScoreCard(
+                                  'HIGH SCORE',
+                                  controller.highScore.value,
+                                ),
+                                const SizedBox(height: 20),
+                                _buildActionButton(
+                                  'START GAME',
+                                  onTap: controller.startGame,
+                                ),
+                              ],
+                            ),
+                          ],
+                        )
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _buildTitle(),
+                            const SizedBox(height: 16),
+                            const Text(
+                              'Catch the dot before it vanishes!',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.white54,
+                              ),
+                            ),
+                            const SizedBox(height: 60),
 
-                  // Start Button
-                  _buildActionButton('START GAME', onTap: controller.startGame),
-                ],
+                            // High Score
+                            _buildScoreCard(
+                              'HIGH SCORE',
+                              controller.highScore.value,
+                            ),
+                            const SizedBox(height: 40),
+
+                            // Start Button
+                            _buildActionButton(
+                              'START GAME',
+                              onTap: controller.startGame,
+                            ),
+                            const SizedBox(height: 20),
+                          ],
+                        ),
+                ),
               ),
-            ),
-          ),
 
-          // Banner Ad at bottom
-          Obx(() {
-            if (adController.isBannerAdLoaded.value &&
-                adController.bannerAd != null) {
-              return Container(
-                alignment: Alignment.center,
-                width: adController.bannerAd!.size.width.toDouble(),
-                height: adController.bannerAd!.size.height.toDouble(),
-                child: AdWidget(ad: adController.bannerAd!),
-              );
-            }
-            return const SizedBox.shrink();
-          }),
-        ],
+              // Banner Ad at bottom
+              Obx(() {
+                if (adController.isBannerAdLoaded.value &&
+                    adController.bannerAd != null) {
+                  return Container(
+                    alignment: Alignment.center,
+                    width: adController.bannerAd!.size.width.toDouble(),
+                    height: adController.bannerAd!.size.height.toDouble(),
+                    child: AdWidget(ad: adController.bannerAd!),
+                  );
+                }
+                return const SizedBox.shrink();
+              }),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildTitle() {
+    return ShaderMask(
+      shaderCallback: (bounds) => const LinearGradient(
+        colors: [Colors.orange, Colors.deepOrange, Colors.red],
+      ).createShader(bounds),
+      child: const Text(
+        'REFLEX DOT',
+        style: TextStyle(
+          fontSize: 48,
+          fontWeight: FontWeight.w900,
+          color: Colors.white,
+          letterSpacing: 4,
+        ),
       ),
     );
   }
@@ -243,77 +327,155 @@ class GameView extends StatelessWidget {
     });
 
     return SafeArea(
-      child: Column(
-        children: [
-          Expanded(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Game Over Title
-                  const Text(
-                    'GAME OVER',
-                    style: TextStyle(
-                      fontSize: 42,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.redAccent,
-                      letterSpacing: 4,
-                    ),
-                  ),
-                  const SizedBox(height: 40),
+      child: OrientationBuilder(
+        builder: (context, orientation) {
+          final isLandscape = orientation == Orientation.landscape;
 
-                  // Score
-                  _buildScoreCard('YOUR SCORE', controller.score.value),
-                  const SizedBox(height: 16),
+          return Column(
+            children: [
+              Expanded(
+                child: Center(
+                  child: isLandscape
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            // Left Side: Title & Score
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Text(
+                                  'GAME OVER',
+                                  style: TextStyle(
+                                    fontSize: 42,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.redAccent,
+                                    letterSpacing: 4,
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                _buildScoreCard(
+                                  'YOUR SCORE',
+                                  controller.score.value,
+                                ),
+                              ],
+                            ),
+                            // Right Side: High Score & Play Again
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                if (isNewHighScore)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [Colors.amber, Colors.orange],
+                                      ),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: const Text(
+                                      '🎉 NEW HIGH SCORE! 🎉',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                  )
+                                else
+                                  _buildScoreCard(
+                                    'HIGH SCORE',
+                                    controller.highScore.value,
+                                  ),
+                                const SizedBox(height: 30),
+                                _buildActionButton(
+                                  'PLAY AGAIN',
+                                  onTap: controller.playAgain,
+                                ),
+                              ],
+                            ),
+                          ],
+                        )
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            // Game Over Title
+                            const Text(
+                              'GAME OVER',
+                              style: TextStyle(
+                                fontSize: 42,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.redAccent,
+                                letterSpacing: 4,
+                              ),
+                            ),
+                            const SizedBox(height: 40),
 
-                  // High Score
-                  if (isNewHighScore)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Colors.amber, Colors.orange],
+                            // Score
+                            _buildScoreCard(
+                              'YOUR SCORE',
+                              controller.score.value,
+                            ),
+                            const SizedBox(height: 16),
+
+                            // High Score
+                            if (isNewHighScore)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [Colors.amber, Colors.orange],
+                                  ),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Text(
+                                  '🎉 NEW HIGH SCORE! 🎉',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              )
+                            else
+                              _buildScoreCard(
+                                'HIGH SCORE',
+                                controller.highScore.value,
+                              ),
+
+                            const SizedBox(height: 50),
+
+                            // Play Again Button
+                            _buildActionButton(
+                              'PLAY AGAIN',
+                              onTap: controller.playAgain,
+                            ),
+                          ],
                         ),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Text(
-                        '🎉 NEW HIGH SCORE! 🎉',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    )
-                  else
-                    _buildScoreCard('HIGH SCORE', controller.highScore.value),
-
-                  const SizedBox(height: 50),
-
-                  // Play Again Button
-                  _buildActionButton('PLAY AGAIN', onTap: controller.playAgain),
-                ],
+                ),
               ),
-            ),
-          ),
 
-          // Banner Ad at bottom
-          Obx(() {
-            if (adController.isBannerAdLoaded.value &&
-                adController.bannerAd != null) {
-              return Container(
-                alignment: Alignment.center,
-                width: adController.bannerAd!.size.width.toDouble(),
-                height: adController.bannerAd!.size.height.toDouble(),
-                child: AdWidget(ad: adController.bannerAd!),
-              );
-            }
-            return const SizedBox.shrink();
-          }),
-        ],
+              // Banner Ad at bottom
+              Obx(() {
+                if (adController.isBannerAdLoaded.value &&
+                    adController.bannerAd != null) {
+                  return Container(
+                    alignment: Alignment.center,
+                    width: adController.bannerAd!.size.width.toDouble(),
+                    height: adController.bannerAd!.size.height.toDouble(),
+                    child: AdWidget(ad: adController.bannerAd!),
+                  );
+                }
+                return const SizedBox.shrink();
+              }),
+            ],
+          );
+        },
       ),
     );
   }
@@ -389,123 +551,127 @@ class GameView extends StatelessWidget {
         return Container(
           color: Colors.black54,
           child: Center(
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 32),
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: const Color(0xFF16213e),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.orange, width: 2),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.5),
-                    blurRadius: 20,
-                    spreadRadius: 5,
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'CONTINUE?',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                      letterSpacing: 2,
+            child: SingleChildScrollView(
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 32),
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF16213e),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.orange, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      blurRadius: 20,
+                      spreadRadius: 5,
                     ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Countdown
-                  Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      CircularProgressIndicator(
-                        value: value / 5,
-                        strokeWidth: 6,
-                        color: Colors.orange,
-                        backgroundColor: Colors.white10,
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'CONTINUE?',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                        letterSpacing: 2,
                       ),
-                      Text(
-                        value.ceil().toString(),
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 30),
+                    ),
+                    const SizedBox(height: 20),
 
-                  // Watch Ad Button
-                  Obx(() {
-                    final isAdReady = adController.isRewardedAdLoaded.value;
-                    return GestureDetector(
-                      onTap: isAdReady
-                          ? () {
-                              adController.showRewardedAd(
-                                onRewardEarned: () {
-                                  controller.startResumeCountdown();
-                                },
-                              );
-                            }
-                          : null,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 16,
+                    // Countdown
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        CircularProgressIndicator(
+                          value: value / 5,
+                          strokeWidth: 6,
+                          color: Colors.orange,
+                          backgroundColor: Colors.white10,
                         ),
-                        decoration: BoxDecoration(
-                          gradient: isAdReady
-                              ? const LinearGradient(
-                                  colors: [Colors.blue, Colors.blueAccent],
-                                )
-                              : LinearGradient(
-                                  colors: [Colors.grey, Colors.grey.shade700],
-                                ),
-                          borderRadius: BorderRadius.circular(15),
+                        Text(
+                          value.ceil().toString(),
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.play_circle_fill,
-                              color: isAdReady ? Colors.white : Colors.white38,
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              isAdReady ? 'WATCH AD' : 'LOADING AD...',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
+                      ],
+                    ),
+                    const SizedBox(height: 30),
+
+                    // Watch Ad Button
+                    Obx(() {
+                      final isAdReady = adController.isRewardedAdLoaded.value;
+                      return GestureDetector(
+                        onTap: isAdReady
+                            ? () {
+                                adController.showRewardedAd(
+                                  onRewardEarned: () {
+                                    controller.startResumeCountdown();
+                                  },
+                                );
+                              }
+                            : null,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 16,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: isAdReady
+                                ? const LinearGradient(
+                                    colors: [Colors.blue, Colors.blueAccent],
+                                  )
+                                : LinearGradient(
+                                    colors: [Colors.grey, Colors.grey.shade700],
+                                  ),
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.play_circle_fill,
                                 color: isAdReady
                                     ? Colors.white
                                     : Colors.white38,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 12),
+                              Text(
+                                isAdReady ? 'WATCH AD' : 'LOADING AD...',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: isAdReady
+                                      ? Colors.white
+                                      : Colors.white38,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
+                    const SizedBox(height: 16),
+
+                    // No Thanks Button
+                    TextButton(
+                      onPressed: controller.confirmGameOver,
+                      child: const Text(
+                        'NO THANKS',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.white54,
+                          letterSpacing: 1,
                         ),
                       ),
-                    );
-                  }),
-                  const SizedBox(height: 16),
-
-                  // No Thanks Button
-                  TextButton(
-                    onPressed: controller.confirmGameOver,
-                    child: const Text(
-                      'NO THANKS',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white54,
-                        letterSpacing: 1,
-                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
