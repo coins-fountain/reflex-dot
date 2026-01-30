@@ -7,8 +7,16 @@ class GameController extends GetxController with GetTickerProviderStateMixin {
   //  Observable Variables
   var isPlaying = false.obs;
   var isGameOver = false.obs;
+  var showRevivePopup = false.obs;
+  var hasRevived = false.obs;
+  var isResuming = false.obs;
+  var resumeCountdown = 3.obs;
   var score = 0.obs;
   var highScore = 0.obs;
+
+  // Ad Logic
+  var gameOverCount = 0;
+  static const int adFrequency = 3;
 
   // Dot Properties
   var dotPositionX = 0.0.obs;
@@ -91,6 +99,9 @@ class GameController extends GetxController with GetTickerProviderStateMixin {
     score.value = 0;
     isPlaying.value = true;
     isGameOver.value = false;
+    showRevivePopup.value = false;
+    hasRevived.value = false;
+    isResuming.value = false;
     _spawnDot();
   }
 
@@ -129,8 +140,48 @@ class GameController extends GetxController with GetTickerProviderStateMixin {
 
   void _gameOver() {
     isPlaying.value = false;
-    isGameOver.value = true;
     _shrinkController.stop();
+
+    if (!hasRevived.value) {
+      showRevivePopup.value = true;
+    } else {
+      confirmGameOver();
+    }
+  }
+
+  void startResumeCountdown() {
+    showRevivePopup.value = false;
+    isResuming.value = true;
+    resumeCountdown.value = 5; // 5 seconds countdown
+
+    // Start timer
+    Future.doWhile(() async {
+      await Future.delayed(const Duration(seconds: 1));
+      if (!isResuming.value) return false; // Cancel if something else happens
+
+      resumeCountdown.value--;
+      if (resumeCountdown.value <= 0) {
+        resumeGame();
+        return false;
+      }
+      return true;
+    });
+  }
+
+  void resumeGame() {
+    isResuming.value = false;
+    hasRevived.value = true;
+    isPlaying.value = true;
+    isGameOver.value = false;
+
+    // Give a fresh dot to continue
+    _spawnDot();
+  }
+
+  void confirmGameOver() {
+    showRevivePopup.value = false;
+    isGameOver.value = true;
+    gameOverCount++;
 
     if (score.value > highScore.value) {
       highScore.value = score.value;

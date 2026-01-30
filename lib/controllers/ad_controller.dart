@@ -10,6 +10,9 @@ class AdController extends GetxController {
   InterstitialAd? interstitialAd;
   var isInterstitialAdLoaded = false.obs;
 
+  RewardedAd? rewardedAd;
+  var isRewardedAdLoaded = false.obs;
+
   // Test Ad Unit IDs
   String get bannerAdUnitId {
     if (Platform.isAndroid) {
@@ -29,17 +32,28 @@ class AdController extends GetxController {
     return '';
   }
 
+  String get rewardedAdUnitId {
+    if (Platform.isAndroid) {
+      return 'ca-app-pub-3940256099942544/5224354917';
+    } else if (Platform.isIOS) {
+      return 'ca-app-pub-3940256099942544/1712485313';
+    }
+    return '';
+  }
+
   @override
   void onInit() {
     super.onInit();
     _loadBannerAd();
     _loadInterstitialAd();
+    _loadRewardedAd();
   }
 
   @override
   void onClose() {
     bannerAd?.dispose();
     interstitialAd?.dispose();
+    rewardedAd?.dispose();
     super.onClose();
   }
 
@@ -92,10 +106,53 @@ class AdController extends GetxController {
     );
   }
 
+  void _loadRewardedAd() {
+    RewardedAd.load(
+      adUnitId: rewardedAdUnitId,
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (ad) {
+          rewardedAd = ad;
+          isRewardedAdLoaded.value = true;
+        },
+        onAdFailedToLoad: (error) {
+          isRewardedAdLoaded.value = false;
+          // Retry loading after a delay
+          Future.delayed(const Duration(seconds: 30), _loadRewardedAd);
+        },
+      ),
+    );
+  }
+
   void showInterstitialAd() {
     if (interstitialAd != null && isInterstitialAdLoaded.value) {
       interstitialAd!.show();
+      interstitialAd = null;
       isInterstitialAdLoaded.value = false;
+    }
+  }
+
+  void showRewardedAd({required Function onRewardEarned}) {
+    if (rewardedAd != null && isRewardedAdLoaded.value) {
+      rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+        onAdDismissedFullScreenContent: (ad) {
+          ad.dispose();
+          _loadRewardedAd(); // Preload next ad
+        },
+        onAdFailedToShowFullScreenContent: (ad, error) {
+          ad.dispose();
+          _loadRewardedAd();
+        },
+      );
+
+      rewardedAd!.show(
+        onUserEarnedReward: (ad, reward) {
+          onRewardEarned();
+        },
+      );
+
+      rewardedAd = null;
+      isRewardedAdLoaded.value = false;
     }
   }
 }
