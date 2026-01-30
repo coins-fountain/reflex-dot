@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
+import 'controllers/ad_controller.dart';
 import 'controllers/game_controller.dart';
 import 'views/game_view.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await GetStorage.init();
+  await MobileAds.instance.initialize();
   runApp(const ReflexDotApp());
 }
 
@@ -30,6 +33,7 @@ class ReflexDotApp extends StatelessWidget {
       home: const GameView(),
       initialBinding: BindingsBuilder(() {
         Get.put(GameController());
+        Get.put(AdController());
       }),
     );
   }

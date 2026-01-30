@@ -2,27 +2,37 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class GameController extends GetxController with GetTickerProviderStateMixin {
-  // === Observable Variables ===
+  //  Observable Variables
   var isPlaying = false.obs;
   var isGameOver = false.obs;
+  var showRevivePopup = false.obs;
+  var hasRevived = false.obs;
+  var isResuming = false.obs;
+  var resumeCountdown = 3.obs;
   var score = 0.obs;
   var highScore = 0.obs;
+  var appVersion = ''.obs;
+
+  // Ad Logic
+  var gameOverCount = 0;
+  static const int adFrequency = 3;
 
   // Dot Properties
   var dotPositionX = 0.0.obs;
   var dotPositionY = 0.0.obs;
   var dotSize = 0.0.obs;
 
-  // === Constants ===
+  //  Constants
   static const double initialDotSize = 80.0;
   static const double minDotSize = 0.0;
   static const int baseShrinkDurationMs = 2000;
   static const int minShrinkDurationMs = 600;
   static const int difficultyFactor = 40;
 
-  // === Internal ===
+  //  Internal
   final _storage = GetStorage();
   late AnimationController _shrinkController;
   late Animation<double> _shrinkAnimation;
@@ -36,6 +46,7 @@ class GameController extends GetxController with GetTickerProviderStateMixin {
     super.onInit();
     _loadHighScore();
     _initShrinkAnimation();
+    _loadAppVersion();
   }
 
   @override
@@ -51,6 +62,11 @@ class GameController extends GetxController with GetTickerProviderStateMixin {
 
   void _loadHighScore() {
     highScore.value = _storage.read<int>('highScore') ?? 0;
+  }
+
+  Future<void> _loadAppVersion() async {
+    final packageInfo = await PackageInfo.fromPlatform();
+    appVersion.value = 'v${packageInfo.version}';
   }
 
   void _saveHighScore() {
@@ -91,6 +107,9 @@ class GameController extends GetxController with GetTickerProviderStateMixin {
     score.value = 0;
     isPlaying.value = true;
     isGameOver.value = false;
+    showRevivePopup.value = false;
+    hasRevived.value = false;
+    isResuming.value = false;
     _spawnDot();
   }
 
@@ -129,8 +148,48 @@ class GameController extends GetxController with GetTickerProviderStateMixin {
 
   void _gameOver() {
     isPlaying.value = false;
-    isGameOver.value = true;
     _shrinkController.stop();
+
+    if (!hasRevived.value) {
+      showRevivePopup.value = true;
+    } else {
+      confirmGameOver();
+    }
+  }
+
+  void startResumeCountdown() {
+    showRevivePopup.value = false;
+    isResuming.value = true;
+    resumeCountdown.value = 5; // 5 seconds countdown
+
+    // Start timer
+    Future.doWhile(() async {
+      await Future.delayed(const Duration(seconds: 1));
+      if (!isResuming.value) return false; // Cancel if something else happens
+
+      resumeCountdown.value--;
+      if (resumeCountdown.value <= 0) {
+        resumeGame();
+        return false;
+      }
+      return true;
+    });
+  }
+
+  void resumeGame() {
+    isResuming.value = false;
+    hasRevived.value = true;
+    isPlaying.value = true;
+    isGameOver.value = false;
+
+    // Give a fresh dot to continue
+    _spawnDot();
+  }
+
+  void confirmGameOver() {
+    showRevivePopup.value = false;
+    isGameOver.value = true;
+    gameOverCount++;
 
     if (score.value > highScore.value) {
       highScore.value = score.value;
