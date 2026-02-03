@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 
 import 'package:get/get.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -41,9 +42,65 @@ class AdController extends GetxController {
     return '';
   }
 
+  final _consentParams = ConsentRequestParameters();
+  var isPrivacyOptionsRequired = false.obs;
+
   @override
   void onInit() {
     super.onInit();
+    _loadConsent();
+  }
+
+  Future<void> _loadConsent() async {
+    ConsentInformation.instance.requestConsentInfoUpdate(
+      _consentParams,
+      () async {
+        if (await ConsentInformation.instance.isConsentFormAvailable()) {
+          _loadConsentForm();
+        } else {
+          _initializeAndLoadAds();
+        }
+      },
+      (FormError error) {
+        debugPrint('Error updating consent info: ${error.message}');
+        _initializeAndLoadAds();
+      },
+    );
+  }
+
+  void _loadConsentForm() {
+    ConsentForm.loadAndShowConsentFormIfRequired((FormError? error) {
+      if (error != null) {
+        debugPrint('Error showing consent form: ${error.message}');
+      }
+
+      _checkPrivacyOptionsRequired();
+
+      _initializeAndLoadAds();
+    });
+  }
+
+  Future<void> _checkPrivacyOptionsRequired() async {
+    if (await ConsentInformation.instance
+            .getPrivacyOptionsRequirementStatus() ==
+        PrivacyOptionsRequirementStatus.required) {
+      isPrivacyOptionsRequired.value = true;
+    } else {
+      isPrivacyOptionsRequired.value = false;
+    }
+  }
+
+  void showPrivacyOptionsForm() {
+    ConsentForm.showPrivacyOptionsForm((FormError? error) {
+      if (error != null) {
+        debugPrint('Error showing privacy options form: ${error.message}');
+      }
+    });
+  }
+
+  void _initializeAndLoadAds() {
+    MobileAds.instance.initialize();
+
     _loadBannerAd();
     _loadInterstitialAd();
     _loadRewardedAd();
