@@ -199,20 +199,53 @@ class GameView extends StatelessWidget {
     final adController = Get.find<AdController>();
 
     return SafeArea(
-      child: OrientationBuilder(
-        builder: (context, orientation) {
-          final isLandscape = orientation == Orientation.landscape;
+      child: Stack(
+        children: [
+          OrientationBuilder(
+            builder: (context, orientation) {
+              final isLandscape = orientation == Orientation.landscape;
 
-          return Column(
-            children: [
-              Expanded(
-                child: Center(
-                  child: isLandscape
-                      ? Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            // Left Side: Title & Tagline
-                            Column(
+              return Column(
+                children: [
+                  Expanded(
+                    child: Center(
+                      child: isLandscape
+                          ? Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                // Left Side: Title & Tagline
+                                Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    _buildTitle(),
+                                    const SizedBox(height: 16),
+                                    const Text(
+                                      'Catch the dot before it vanishes!',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.white54,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                // Right Side: Score & Start
+                                Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    _buildScoreCard(
+                                      'HIGH SCORE',
+                                      controller.highScore.value,
+                                    ),
+                                    const SizedBox(height: 20),
+                                    _buildActionButton(
+                                      'START GAME',
+                                      onTap: controller.startGame,
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            )
+                          : Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 _buildTitle(),
@@ -224,73 +257,58 @@ class GameView extends StatelessWidget {
                                     color: Colors.white54,
                                   ),
                                 ),
-                              ],
-                            ),
-                            // Right Side: Score & Start
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
+                                const SizedBox(height: 60),
+
+                                // High Score
                                 _buildScoreCard(
                                   'HIGH SCORE',
                                   controller.highScore.value,
                                 ),
-                                const SizedBox(height: 20),
+                                const SizedBox(height: 40),
+
+                                // Start Button
                                 _buildActionButton(
                                   'START GAME',
                                   onTap: controller.startGame,
                                 ),
+                                const SizedBox(height: 20),
                               ],
                             ),
-                          ],
-                        )
-                      : Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _buildTitle(),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'Catch the dot before it vanishes!',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.white54,
-                              ),
-                            ),
-                            const SizedBox(height: 60),
+                    ),
+                  ),
 
-                            // High Score
-                            _buildScoreCard(
-                              'HIGH SCORE',
-                              controller.highScore.value,
-                            ),
-                            const SizedBox(height: 40),
-
-                            // Start Button
-                            _buildActionButton(
-                              'START GAME',
-                              onTap: controller.startGame,
-                            ),
-                            const SizedBox(height: 20),
-                          ],
-                        ),
+                  // Banner Ad at bottom
+                  Obx(() {
+                    if (adController.isBannerAdLoaded.value &&
+                        adController.bannerAd != null) {
+                      return Container(
+                        alignment: Alignment.center,
+                        width: adController.bannerAd!.size.width.toDouble(),
+                        height: adController.bannerAd!.size.height.toDouble(),
+                        child: AdWidget(ad: adController.bannerAd!),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  }),
+                ],
+              );
+            },
+          ),
+          Obx(() {
+            if (adController.isPrivacyOptionsRequired.value) {
+              return Positioned(
+                top: 0,
+                right: 0,
+                child: IconButton(
+                  icon: const Icon(Icons.privacy_tip, color: Colors.white24),
+                  onPressed: () => adController.showPrivacyOptionsForm(),
+                  tooltip: 'Privacy Settings',
                 ),
-              ),
-
-              // Banner Ad at bottom
-              Obx(() {
-                if (adController.isBannerAdLoaded.value &&
-                    adController.bannerAd != null) {
-                  return Container(
-                    alignment: Alignment.center,
-                    width: adController.bannerAd!.size.width.toDouble(),
-                    height: adController.bannerAd!.size.height.toDouble(),
-                    child: AdWidget(ad: adController.bannerAd!),
-                  );
-                }
-                return const SizedBox.shrink();
-              }),
-            ],
-          );
-        },
+              );
+            }
+            return const SizedBox.shrink();
+          }),
+        ],
       ),
     );
   }
