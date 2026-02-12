@@ -21,3 +21,12 @@
 
 # Flutter Embedder
 -keep class io.flutter.embedding.engine.** { *; }
+
+# Google Play Core
+-keep class com.google.android.play.core.splitcompat.** { *; }
+-keep class com.google.android.play.core.splitinstall.** { *; }
+-keep class com.google.android.play.core.tasks.** { *; }
+-keep class com.google.android.play.core.assetpacks.** { *; }
+-keep class com.google.android.play.core.review.** { *; }
+-keep class com.google.android.play.core.appupdate.** { *; }
+-dontwarn com.google.android.play.core.**
