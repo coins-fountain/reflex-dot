@@ -337,10 +337,11 @@ class GameView extends StatelessWidget {
         controller.score.value > 0;
 
     // Show interstitial ad when game over screen is displayed
-    // Only show ad every 3rd game over
+    // Only show ad if cooldown has passed
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (controller.gameOverCount % GameController.adFrequency == 0) {
+      if (controller.canShowAd()) {
         adController.showInterstitialAd();
+        controller.markAdShown();
       }
     });
 

@@ -17,8 +17,8 @@ class GameController extends GetxController with GetTickerProviderStateMixin {
   var appVersion = ''.obs;
 
   // Ad Logic
-  var gameOverCount = 0;
-  static const int adFrequency = 3;
+  DateTime? lastAdTime;
+  static const int adCooldownSeconds = 60;
 
   // Dot Properties
   var dotPositionX = 0.0.obs;
@@ -189,7 +189,7 @@ class GameController extends GetxController with GetTickerProviderStateMixin {
   void confirmGameOver() {
     showRevivePopup.value = false;
     isGameOver.value = true;
-    gameOverCount++;
+    isGameOver.value = true;
 
     if (score.value > highScore.value) {
       highScore.value = score.value;
@@ -199,5 +199,17 @@ class GameController extends GetxController with GetTickerProviderStateMixin {
 
   void playAgain() {
     startGame();
+  }
+
+  bool canShowAd() {
+    if (lastAdTime == null) {
+      return true;
+    }
+    final difference = DateTime.now().difference(lastAdTime!);
+    return difference.inSeconds >= adCooldownSeconds;
+  }
+
+  void markAdShown() {
+    lastAdTime = DateTime.now();
   }
 }
