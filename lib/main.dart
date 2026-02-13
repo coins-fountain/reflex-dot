@@ -4,7 +4,7 @@ import 'package:get_storage/get_storage.dart';
 
 import 'controllers/ad_controller.dart';
 import 'controllers/game_controller.dart';
-import 'views/game_view.dart';
+import 'views/home_view.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,7 +28,7 @@ class ReflexDotApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: const GameView(),
+      home: const HomeView(),
       initialBinding: BindingsBuilder(() {
         Get.put(GameController());
         Get.put(AdController());

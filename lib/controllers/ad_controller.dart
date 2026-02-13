@@ -8,6 +8,9 @@ class AdController extends GetxController {
   BannerAd? bannerAd;
   var isBannerAdLoaded = false.obs;
 
+  BannerAd? gameBannerAd;
+  var isGameBannerAdLoaded = false.obs;
+
   InterstitialAd? interstitialAd;
   var isInterstitialAdLoaded = false.obs;
 
@@ -102,6 +105,7 @@ class AdController extends GetxController {
     MobileAds.instance.initialize();
 
     _loadBannerAd();
+    _loadGameBannerAd();
     _loadInterstitialAd();
     _loadRewardedAd();
   }
@@ -109,6 +113,7 @@ class AdController extends GetxController {
   @override
   void onClose() {
     bannerAd?.dispose();
+    gameBannerAd?.dispose();
     interstitialAd?.dispose();
     rewardedAd?.dispose();
     super.onClose();
@@ -132,6 +137,26 @@ class AdController extends GetxController {
       ),
     );
     bannerAd!.load();
+  }
+
+  void _loadGameBannerAd() {
+    gameBannerAd = BannerAd(
+      adUnitId: bannerAdUnitId, // Use same ID or different if needed
+      size: AdSize.banner,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          isGameBannerAdLoaded.value = true;
+        },
+        onAdFailedToLoad: (ad, error) {
+          ad.dispose();
+          isGameBannerAdLoaded.value = false;
+          // Retry loading after a delay
+          Future.delayed(const Duration(seconds: 30), _loadGameBannerAd);
+        },
+      ),
+    );
+    gameBannerAd!.load();
   }
 
   void _loadInterstitialAd() {
