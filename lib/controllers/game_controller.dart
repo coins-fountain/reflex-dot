@@ -4,7 +4,8 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-class GameController extends GetxController with GetTickerProviderStateMixin {
+class GameController extends GetxController
+    with GetTickerProviderStateMixin, WidgetsBindingObserver {
   //  Observable Variables
   var isPlaying = false.obs;
   var isGameOver = false.obs;
@@ -17,8 +18,8 @@ class GameController extends GetxController with GetTickerProviderStateMixin {
   var appVersion = ''.obs;
 
   // Ad Logic
-  var gameOverCount = 0;
-  static const int adFrequency = 3;
+  DateTime? lastAdTime;
+  static const int adCooldownSeconds = 60;
 
   // Dot Properties
   var dotPositionX = 0.0.obs;
@@ -37,6 +38,8 @@ class GameController extends GetxController with GetTickerProviderStateMixin {
   late AnimationController _shrinkController;
   late Animation<double> _shrinkAnimation;
   final Random _random = Random();
+  bool _isProcessingTap = false;
+  bool _wasPausedDuringGame = false;
 
   Size _screenSize = Size.zero;
   EdgeInsets _safeAreaPadding = EdgeInsets.zero;
@@ -44,6 +47,7 @@ class GameController extends GetxController with GetTickerProviderStateMixin {
   @override
   void onInit() {
     super.onInit();
+    WidgetsBinding.instance.addObserver(this);
     _loadHighScore();
     _initShrinkAnimation();
     _loadAppVersion();
@@ -51,8 +55,34 @@ class GameController extends GetxController with GetTickerProviderStateMixin {
 
   @override
   void onClose() {
+    WidgetsBinding.instance.removeObserver(this);
     _shrinkController.dispose();
     super.onClose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      _onAppPaused();
+    } else if (state == AppLifecycleState.resumed) {
+      _onAppResumed();
+    }
+  }
+
+  void _onAppPaused() {
+    if (isPlaying.value && !isGameOver.value) {
+      _shrinkController.stop();
+      _wasPausedDuringGame = true;
+    }
+  }
+
+  void _onAppResumed() {
+    if (_wasPausedDuringGame) {
+      _wasPausedDuringGame = false;
+      _spawnDot();
+    }
   }
 
   void setScreenConstraints(Size screenSize, EdgeInsets safeAreaPadding) {
@@ -134,10 +164,12 @@ class GameController extends GetxController with GetTickerProviderStateMixin {
   }
 
   void handleTapDot() {
-    if (!isPlaying.value || isGameOver.value) return;
+    if (!isPlaying.value || isGameOver.value || _isProcessingTap) return;
 
+    _isProcessingTap = true;
     score.value++;
     _spawnDot();
+    _isProcessingTap = false;
   }
 
   void handleTapBackground() {
@@ -189,7 +221,6 @@ class GameController extends GetxController with GetTickerProviderStateMixin {
   void confirmGameOver() {
     showRevivePopup.value = false;
     isGameOver.value = true;
-    gameOverCount++;
 
     if (score.value > highScore.value) {
       highScore.value = score.value;
@@ -199,5 +230,17 @@ class GameController extends GetxController with GetTickerProviderStateMixin {
 
   void playAgain() {
     startGame();
+  }
+
+  bool canShowAd() {
+    if (lastAdTime == null) {
+      return true;
+    }
+    final difference = DateTime.now().difference(lastAdTime!);
+    return difference.inSeconds >= adCooldownSeconds;
+  }
+
+  void markAdShown() {
+    lastAdTime = DateTime.now();
   }
 }
