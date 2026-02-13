@@ -26,7 +26,9 @@ class HomeBottomSection extends StatelessWidget {
               TextButton.icon(
                 onPressed: () {
                   launchUrl(
-                    Uri.parse('https://example.com'),
+                    Uri.parse(
+                      'https://coins-fountain.github.io/privacy-policy-games/',
+                    ),
                     mode: LaunchMode.externalApplication,
                   );
                 },
