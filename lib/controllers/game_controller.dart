@@ -86,8 +86,13 @@ class GameController extends GetxController
   }
 
   void setScreenConstraints(Size screenSize, EdgeInsets safeAreaPadding) {
+    final bool wasZero = _screenSize == Size.zero;
     _screenSize = screenSize;
     _safeAreaPadding = safeAreaPadding;
+
+    if (wasZero && isPlaying.value && !isGameOver.value && !isResuming.value) {
+      _spawnDot();
+    }
   }
 
   void _loadHighScore() {
@@ -140,21 +145,28 @@ class GameController extends GetxController
     showRevivePopup.value = false;
     hasRevived.value = false;
     isResuming.value = false;
-    _spawnDot();
+
+    if (_screenSize != Size.zero) {
+      _spawnDot();
+    }
   }
 
   void _spawnDot() {
-    // Calculate safe bounds
-    final double padding = initialDotSize;
-    final double minX = _safeAreaPadding.left + padding;
-    final double maxX = _screenSize.width - _safeAreaPadding.right - padding;
-    final double minY =
-        _safeAreaPadding.top + padding + 60; // Extra space for score
-    final double maxY = _screenSize.height - _safeAreaPadding.bottom - padding;
+    if (_screenSize == Size.zero) return;
 
-    // Random position within safe area
-    dotPositionX.value = minX + _random.nextDouble() * (maxX - minX);
-    dotPositionY.value = minY + _random.nextDouble() * (maxY - minY);
+    final double radius = initialDotSize / 2;
+    final double minX = _safeAreaPadding.left + radius;
+    final double maxX = _screenSize.width - _safeAreaPadding.right - radius;
+    final double minY = _safeAreaPadding.top + radius + 80;
+    final double maxY = _screenSize.height - _safeAreaPadding.bottom - radius;
+
+    if (maxX <= minX || maxY <= minY) {
+      dotPositionX.value = _screenSize.width / 2;
+      dotPositionY.value = _screenSize.height / 2;
+    } else {
+      dotPositionX.value = minX + _random.nextDouble() * (maxX - minX);
+      dotPositionY.value = minY + _random.nextDouble() * (maxY - minY);
+    }
 
     // Reset and start shrink animation
     dotSize.value = initialDotSize;

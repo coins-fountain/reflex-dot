@@ -89,13 +89,19 @@ class GameView extends StatelessWidget {
                   return Positioned(
                     left:
                         controller.dotPositionX.value -
-                        controller.dotSize.value / 2,
+                        GameController.initialDotSize / 2,
                     top:
                         controller.dotPositionY.value -
-                        controller.dotSize.value / 2,
+                        GameController.initialDotSize / 2,
                     child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
                       onTap: controller.handleTapDot,
-                      child: GameDot(size: controller.dotSize.value),
+                      child: Container(
+                        width: GameController.initialDotSize,
+                        height: GameController.initialDotSize,
+                        alignment: Alignment.center,
+                        child: GameDot(size: controller.dotSize.value),
+                      ),
                     ),
                   );
                 }
